@@ -1,0 +1,20 @@
+{
+  "name": "hyva-themes/magento2-checkout-example",
+  "description": "The right way to modify Hyvä React Checkout Magento 2 module.",
+  "type": "magento2-module",
+  "require": {
+    "magento/framework": "*",
+    "hyva-themes/magento2-react-checkout": "*"
+  },
+  "license": [
+    "BSD-3-Clause"
+  ],
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "Hyva\\CheckoutExample\\": ""
+    }
+  }
+}
