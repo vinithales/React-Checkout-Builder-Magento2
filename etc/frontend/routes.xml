@@ -3,7 +3,7 @@
     xsi:noNamespaceSchemaLocation="urn:magento:framework:App/etc/routes.xsd">
     <router id="standard">
         <route id="checkoutbuilder" frontName="checkoutbuilder">
-            <module name="FriendsOfHyva_CheckoutExample" />
+            <module name="Hyva_CheckoutExample" />
         </route>
     </router>
 </config>

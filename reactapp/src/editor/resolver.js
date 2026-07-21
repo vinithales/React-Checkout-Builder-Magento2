@@ -1,4 +1,4 @@
-import CraftableContainer from '../craft-components/CraftableContainer';
+import { CraftableContainer } from '../craft-components/CraftableContainer';
 import { CraftableMessage } from '../craft-components/CraftableMessage';
 import { CraftablePageLoader } from '../craft-components/CraftablePageLoader';
 import { CraftableLogin } from '../craft-components/CraftableLogin';
