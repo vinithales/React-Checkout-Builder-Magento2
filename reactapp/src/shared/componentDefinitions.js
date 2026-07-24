@@ -1,0 +1,17 @@
+export const componentDefinitions = {
+  Container: { label: 'Container', container: true },
+  AddressWrapper: { label: 'Address wrapper', container: true },
+  StickySidebar: { label: 'Sticky right sidebar', container: true },
+  Login: { label: 'Login' },
+  ShippingAddress: { label: 'Shipping address' },
+  BillingAddress: { label: 'Billing address' },
+  ShippingMethods: { label: 'Shipping methods' },
+  PaymentMethod: { label: 'Payment method' },
+  CouponCode: { label: 'Coupon code' },
+  CartItems: { label: 'Cart items' },
+  CheckoutAgreements: { label: 'Checkout agreements' },
+  Totals: { label: 'Totals summary' },
+  PlaceOrder: { label: 'Place order' },
+  Message: { label: 'System messages' },
+  PageLoader: { label: 'Page loader' },
+};

@@ -1,64 +1,145 @@
-import React, { useEffect, useState } from 'react';
-import { Editor } from '@craftjs/core';
-
-import { config } from '@hyva/react-checkout/config';
-import { aggregatedQueryRequest } from '@hyva/react-checkout/api';
-import LocalStorage from '@hyva/react-checkout/utils/localStorage';
-import useCheckoutFormContext from '@hyva/react-checkout/hook/useCheckoutFormContext';
-import useCheckoutFormAppContext from '@hyva/react-checkout/components/CheckoutForm/hooks/useCheckoutFormAppContext';
-import useCheckoutFormCartContext from '@hyva/react-checkout/components/CheckoutForm/hooks/useCheckoutFormCartContext';
-import PageLoader from '@hyva/react-checkout/components/common/Loader';
-
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Editor, useEditor } from '@craftjs/core';
+import PropTypes from 'prop-types';
+import { defaultLayout } from '../shared/defaultLayout';
+import { parseLayout } from '../shared/layout';
 import EditorLayout from './EditorLayout';
-import { resolver } from './resolver';
+import { craftToLayout } from './layoutAdapter';
+import { resolver } from './nodes';
+import { loadLayout, publishLayout, saveLayout } from './api';
 
-function CheckoutEditor() {
-  const [isRequestSent, setIsRequestSent] = useState(false);
-  const { storeAggregatedFormStates } = useCheckoutFormContext();
-  const { storeAggregatedCartStates } = useCheckoutFormCartContext();
-  const { pageLoader, appDispatch, setPageLoader, storeAggregatedAppStates } =
-    useCheckoutFormAppContext();
+function ConnectedEditor({ config, record, onRecord, storeId, onStore }) {
+  const [device, setDevice] = useState('desktop');
+  const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [status, setStatus] = useState({ type: 'idle', message: 'Ready' });
+  const initialized = useRef(false);
+  const { query, revision } = useEditor((state) => ({
+    revision: state.nodes,
+  }));
 
   useEffect(() => {
-    if (isRequestSent) {
+    if (initialized.current) {
+      setDirty(true);
+    } else {
+      initialized.current = true;
+    }
+  }, [revision]);
+
+  const currentLayout = useCallback(() => craftToLayout(query), [query]);
+  const run = async (operation, success) => {
+    setSaving(true);
+    setStatus({ type: 'idle', message: 'Working…' });
+    try {
+      const next = await operation();
+      onRecord({ ...record, ...next });
+      setDirty(false);
+      setStatus({ type: 'success', message: success });
+    } catch (error) {
+      setStatus({ type: 'error', message: error.message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const save = () =>
+    run(
+      () => saveLayout(config, storeId, currentLayout(), record.version),
+      'Draft saved'
+    );
+  const publish = async () => {
+    if (dirty) {
+      setStatus({
+        type: 'error',
+        message: 'Save the draft before publishing.',
+      });
       return;
     }
+    await run(
+      () => publishLayout(config, storeId, record.version),
+      'Layout published'
+    );
+  };
 
-    if (!LocalStorage.getCartId()) {
-      LocalStorage.saveCartId(config.cartId);
-    }
-
-    (async () => {
-      try {
-        setPageLoader(true);
-        setIsRequestSent(true);
-        const data = await aggregatedQueryRequest(appDispatch);
-        storeAggregatedCartStates(data);
-        storeAggregatedAppStates(data);
-        storeAggregatedFormStates(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setPageLoader(false);
+  useEffect(() => {
+    const warn = (event) => {
+      if (dirty) {
+        event.preventDefault();
+        // Required by Chromium to trigger its native leave-page prompt.
+        // eslint-disable-next-line no-param-reassign
+        event.returnValue = '';
       }
-    })();
-  }, [
-    appDispatch,
-    isRequestSent,
-    setPageLoader,
-    storeAggregatedAppStates,
-    storeAggregatedCartStates,
-    storeAggregatedFormStates,
-  ]);
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
 
   return (
-    <div className="craft-editor">
-      {pageLoader && <PageLoader />}
-      <Editor resolver={resolver}>
-        <EditorLayout />
-      </Editor>
-    </div>
+    <EditorLayout
+      layout={record.layout}
+      stores={config.stores}
+      storeId={storeId}
+      onStore={onStore}
+      inherited={record.inherited}
+      status={status}
+      device={device}
+      onDevice={setDevice}
+      onSave={save}
+      onPublish={publish}
+      onPreview={() =>
+        window.open(
+          config.stores.find((store) => store.value === storeId).checkoutUrl,
+          '_blank'
+        )
+      }
+      saving={saving}
+      dirty={dirty}
+    />
   );
 }
 
-export default CheckoutEditor;
+ConnectedEditor.propTypes = {
+  config: PropTypes.object.isRequired,
+  record: PropTypes.object.isRequired,
+  onRecord: PropTypes.func.isRequired,
+  storeId: PropTypes.number.isRequired,
+  onStore: PropTypes.func.isRequired,
+};
+
+export default function CheckoutEditor({ config }) {
+  const [storeId, setStoreId] = useState(config.storeId);
+  const [record, setRecord] = useState(null);
+  const [error, setError] = useState('');
+  const reload = useCallback(
+    (nextStore) => {
+      setRecord(null);
+      setError('');
+      loadLayout(config, nextStore)
+        .then((data) =>
+          setRecord({
+            layout: parseLayout(data.json, defaultLayout),
+            version: data.version,
+            inherited: data.inherited,
+          })
+        )
+        .catch((requestError) => setError(requestError.message));
+    },
+    [config]
+  );
+  useEffect(() => reload(storeId), [reload, storeId]);
+  if (error) return <div className="editor-fatal">{error}</div>;
+  if (!record) return <div className="editor-loading">Loading editor…</div>;
+  return (
+    <Editor key={storeId} resolver={resolver}>
+      <ConnectedEditor
+        config={config}
+        record={record}
+        onRecord={setRecord}
+        storeId={storeId}
+        onStore={setStoreId}
+      />
+    </Editor>
+  );
+}
+
+CheckoutEditor.propTypes = { config: PropTypes.object.isRequired };

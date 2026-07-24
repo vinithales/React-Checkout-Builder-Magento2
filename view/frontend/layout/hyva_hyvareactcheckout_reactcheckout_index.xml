@@ -2,6 +2,13 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="urn:magento:module:View/Layout:etc/page_configuration.xsd">
     <body>
-        <referenceBlock name="checkout.scripts" template="Hyva_CheckoutExample::react-script.phtml" />
+        <referenceBlock name="checkout.container"
+                        template="FriendsOfHyva_CheckoutExample::react-container.phtml">
+            <arguments>
+                <argument name="published_layout"
+                          xsi:type="object">FriendsOfHyva\CheckoutExample\ViewModel\PublishedLayout</argument>
+            </arguments>
+        </referenceBlock>
+        <referenceBlock name="checkout.scripts" template="FriendsOfHyva_CheckoutExample::react-script.phtml" />
     </body>
 </page>

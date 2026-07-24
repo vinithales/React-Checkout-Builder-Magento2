@@ -32,7 +32,10 @@
   "scripts": {
     "preinstall": "node scripts/configureCheckoutIntegrations",
     "start": "npm run app:start",
-    "build": "react-app-rewired build",
+    "build": "npm run build:runtime && npm run build:editor",
+    "build:runtime": "BUILD_TARGET=runtime react-app-rewired build",
+    "build:editor": "BUILD_TARGET=editor react-app-rewired build",
+    "start:editor": "BUILD_TARGET=editor react-app-rewired start",
     "test": "react-app-rewired test",
     "eject": "react-app-rewired eject",
     "precommit": "lint-staged",
@@ -50,6 +53,16 @@
   },
   "eslintConfig": {
     "extends": "react-app"
+  },
+  "jest": {
+    "moduleDirectories": [
+      "node_modules",
+      "<rootDir>/node_modules"
+    ],
+    "moduleNameMapper": {
+      "^react$": "<rootDir>/node_modules/react",
+      "^react-dom$": "<rootDir>/node_modules/react-dom"
+    }
   },
   "engines": {
     "npm": ">=8.0.0",

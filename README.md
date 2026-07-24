@@ -15,9 +15,9 @@ We highly recommend going for this approach when it comes to customize Hyvä Che
 
 ## Installation
 - Install Hyvä Checkout via composer. You can find more details in the [**official documentation**](https://friends-of-hyva.github.io/magento2-react-checkout/installation/)
-- Setup this Magento 2 module template in your project. We are naming the module `Hyva_CheckoutExample`.
+- Setup this Magento 2 module template in your project. We are naming the module `FriendsOfHyva_CheckoutExample`.
     - Clone it into `app/code/Hyva/CheckoutExample`
-    - Enable your module with `bin/magento module:enable Hyva_CheckoutExample`
+    - Enable your module with `bin/magento module:enable FriendsOfHyva_CheckoutExample`
     - Run setup upgrade with `bin/magento setup:upgrade`
 
 - Setup ReactApp (See: [How to customize Hyvä Checkout](https://friends-of-hyva.github.io/magento2-react-checkout/customize/))
@@ -30,7 +30,7 @@ We highly recommend going for this approach when it comes to customize Hyvä Che
     - Copy the `env.example` file into `.env` and modify its contents
     - Run `npm run start`
 
-Please remember this is a template. So you can name this module as you wish. There is no need to go on with the given name `Hyva_CheckoutExample`. If you have a different name for this template then, you need to update the module name at least in below files.
+Please remember this is a template. So you can name this module as you wish. There is no need to go on with the given name `FriendsOfHyva_CheckoutExample`. If you have a different name for this template then, you need to update the module name at least in below files.
 
 - registration.php
 - composer.json
@@ -38,12 +38,12 @@ Please remember this is a template. So you can name this module as you wish. The
 - Change template as per your module name at `view/frontend/layout/hyvareactcheckout_reactcheckout_index.xml`
 
     ```
-    <referenceBlock name="checkout.scripts" template="Hyva_CheckoutExample::react-script.phtml" />
+    <referenceBlock name="checkout.scripts" template="FriendsOfHyva_CheckoutExample::react-script.phtml" />
     ```
 - Change js file reference at `view/frontend/templates/react-script.phtml`
 
     ```
-    newScript.src = '<?= $escaper->escapeUrl($block->getViewFileUrl('Hyva_CheckoutExample::js/react-checkout.js')); ?>';
+    newScript.src = '<?= $escaper->escapeUrl($block->getViewFileUrl('FriendsOfHyva_CheckoutExample::js/react-checkout.js')); ?>';
     ```
 
 ## Copying React components

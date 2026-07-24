@@ -1,0 +1,21 @@
+<?php
+declare(strict_types=1);
+
+use FriendsOfHyva\ReactCheckout\ViewModel\CheckoutConfigProvider;
+use FriendsOfHyva\CheckoutExample\ViewModel\PublishedLayout;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Template $block */
+/** @var Escaper $escaper */
+/** @var CheckoutConfigProvider $configProvider */
+$configProvider = $block->getData('checkout_config_provider');
+/** @var PublishedLayout $publishedLayout */
+$publishedLayout = $block->getData('published_layout');
+?>
+<div id="react-checkout"
+     data-base_url="<?= $escaper->escapeUrl($block->getBaseUrl()) ?>"
+     data-checkout_config="<?= $escaper->escapeHtmlAttr($configProvider->getConfig()) ?>"
+     data-checkout_layout="<?= $escaper->escapeHtmlAttr($publishedLayout->getJson()) ?>"
+     data-static_file_path="<?= $escaper->escapeUrl($block->getViewFileUrl('')) ?>">
+</div>

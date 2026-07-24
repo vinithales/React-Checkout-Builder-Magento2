@@ -23,8 +23,14 @@ const aliasMap = {
 
 module.exports = function override(config, env) {
   const isEnvProduction = env === 'production';
+  const buildTarget = process.env.BUILD_TARGET || 'runtime';
+  if (buildTarget === 'editor') {
+    config.entry = path.resolve(__dirname, 'src/editor/index.jsx');
+  }
   const filename = isEnvProduction
-    ? '../../view/frontend/web/js/react-checkout.js'
+    ? buildTarget === 'editor'
+      ? '../../view/adminhtml/web/js/checkout-editor.js'
+      : '../../view/frontend/web/js/react-checkout.js'
     : 'static/js/bundle.js';
   const chunkFilename = isEnvProduction
     ? '../../view/frontend/web/js/[name].chunk.js'
@@ -82,7 +88,7 @@ module.exports = function override(config, env) {
   }
 
   // Save css bundle into styles.css
-  cssFileNameUpdator(newConfig, isEnvProduction);
+  cssFileNameUpdator(newConfig, isEnvProduction, buildTarget);
   // Apply postcss.config.js
   reactAppRewirePostCssApplier(newConfig);
 

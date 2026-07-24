@@ -1,0 +1,16 @@
+<?php
+declare(strict_types=1);
+
+use FriendsOfHyva\CheckoutExample\ViewModel\EditorConfig;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Template $block */
+/** @var Escaper $escaper */
+/** @var EditorConfig $config */
+$config = $block->getData('editor_config');
+?>
+<div id="checkout-builder-editor"
+     data-editor_config="<?= $escaper->escapeHtmlAttr($config->getJson()) ?>"></div>
+<script src="<?= $escaper->escapeUrl($block->getViewFileUrl('FriendsOfHyva_CheckoutExample::js/checkout-editor.js')) ?>"
+        defer></script>

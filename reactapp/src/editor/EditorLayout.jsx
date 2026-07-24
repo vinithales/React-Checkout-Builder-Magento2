@@ -1,20 +1,56 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Canvas } from './Canvas';
 import { Sidebar } from './Sidebar';
 import { Toolbar } from './Toolbar';
 import { Inspector } from './Inspector';
+import { DragPreview } from './DragPreview';
 
-export default function EditorLayout() {
+export default function EditorLayout(props) {
+  const { layout, stores, storeId, onStore, status, inherited, device } = props;
   return (
-    <div className="editor h-screen bg-slate-950 text-slate-100 flex flex-col overflow-hidden">
-      <Toolbar />
-      <div className="editor-body flex flex-1 h-[calc(100vh-72px)]">
+    <div className="checkout-editor">
+      <Toolbar {...props} />
+      <div className="editor-subbar">
+        <span>Store view</span>
+        <select
+          id="store-view"
+          value={storeId}
+          onChange={(event) => onStore(Number(event.target.value))}
+        >
+          {stores.map((store) => (
+            <option key={store.value} value={store.value}>
+              {store.label}
+            </option>
+          ))}
+        </select>
+        {inherited && <span className="inherited">Using inherited layout</span>}
+        <span className={`editor-status editor-status--${status.type}`}>
+          {status.message}
+        </span>
+      </div>
+      <div className="editor-workspace">
         <Sidebar />
-        <div className="flex-1 overflow-y-auto bg-slate-900 p-8">
-          <Canvas />
-        </div>
+        <Canvas layout={layout} device={device} />
         <Inspector />
       </div>
+      <DragPreview />
     </div>
   );
 }
+
+EditorLayout.propTypes = {
+  layout: PropTypes.object.isRequired,
+  stores: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.number.isRequired,
+      label: PropTypes.string.isRequired,
+      checkoutUrl: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  storeId: PropTypes.number.isRequired,
+  onStore: PropTypes.func.isRequired,
+  status: PropTypes.object.isRequired,
+  inherited: PropTypes.bool.isRequired,
+  device: PropTypes.string.isRequired,
+};

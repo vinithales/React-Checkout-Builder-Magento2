@@ -9,7 +9,7 @@ use Magento\Framework\Event\ObserverInterface;
 
 class RegisterModuleForHyvaConfig implements ObserverInterface
 {
-    private const MODULE_NAME = 'Hyva_CheckoutExample';
+    private const MODULE_NAME = 'FriendsOfHyva_CheckoutExample';
 
     /**
      * @var ComponentRegistrar

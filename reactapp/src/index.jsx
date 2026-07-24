@@ -6,22 +6,16 @@ import RootElement from '@hyva/react-checkout/utils/rootElement';
 import AppDataProvider from '@hyva/react-checkout/context/App/AppDataProvider';
 import CartDataProvider from '@hyva/react-checkout/context/Cart/CartDataProvider';
 import CheckoutFormProvider from '@hyva/react-checkout/context/Form/CheckoutFormProvider';
-import CheckoutForm from './components/CheckoutForm/CheckoutFormSteps';
-import CheckoutEditor from './editor/CheckoutEditor';
+import CheckoutRuntime from './runtime/CheckoutRuntime';
 
 import './index.css';
 
 function Checkout() {
-  const isEditor =
-    window.location.pathname.includes('checkoutbuilder') ||
-    new URLSearchParams(window.location.search).has('edit') ||
-    new URLSearchParams(window.location.search).has('editor');
-
   return (
     <AppDataProvider>
       <CartDataProvider>
         <CheckoutFormProvider>
-          {isEditor ? <CheckoutEditor /> : <CheckoutForm />}
+          <CheckoutRuntime />
         </CheckoutFormProvider>
       </CartDataProvider>
     </AppDataProvider>

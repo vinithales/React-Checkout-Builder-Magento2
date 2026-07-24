@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="FriendsOfHyva_CheckoutExample::checkout_builder"
+             title="Checkout Builder"
+             module="FriendsOfHyva_CheckoutExample"
+             sortOrder="90"
+             parent="Magento_Backend::content"
+             action="hyva_checkout_builder/editor/index"
+             resource="FriendsOfHyva_CheckoutExample::checkout_builder"/>
+    </menu>
+</config>

@@ -1,111 +1,81 @@
-import React from 'react';
-import { useEditor, Element } from '@craftjs/core';
-import { CraftableContainer } from '../craft-components/CraftableContainer';
-import { CraftableMessage } from '../craft-components/CraftableMessage';
-import { CraftablePageLoader } from '../craft-components/CraftablePageLoader';
-import { CraftableLogin } from '../craft-components/CraftableLogin';
-import { CraftableAddressWrapper } from '../craft-components/CraftableAddressWrapper';
-import { CraftableShippingAddress } from '../craft-components/CraftableShippingAddress';
-import { CraftableBillingAddress } from '../craft-components/CraftableBillingAddress';
-import { CraftableShippingMethodsForm } from '../craft-components/CraftableShippingMethodsForm';
-import { CraftablePaymentMethod } from '../craft-components/CraftablePaymentMethod';
-import { CraftableCheckoutAgreements } from '../craft-components/CraftableCheckoutAgreements';
-import { CraftableCouponCode } from '../craft-components/CraftableCouponCode';
-import { CraftablePlaceOrder } from '../craft-components/CraftablePlaceOrder';
-import { CraftableTotals } from '../craft-components/CraftableTotals';
-import { CraftableStickyRightSidebar } from '../craft-components/CraftableStickyRightSidebar';
-import { CraftableCartItemsForm } from '../craft-components/CraftableCartItemsForm';
+import React, { useState } from 'react';
+import { Element, useEditor } from '@craftjs/core';
+import PropTypes from 'prop-types';
+import { componentGroups, componentRegistry } from '../shared/registry';
+import { editorNodes } from './nodes';
+import { startDragPreview, stopDragPreview } from './DragPreview';
 
-export function Sidebar() {
+function LibraryCard({ type }) {
   const {
     connectors: { create },
   } = useEditor();
-
-  const blocks = [
-    {
-      title: 'Layout Blocks',
-      items: [
-        {
-          name: 'Container Column',
-          component: <Element is={CraftableContainer} canvas />,
-        },
-        {
-          name: 'Address Wrapper',
-          component: <Element is={CraftableAddressWrapper} canvas />,
-        },
-        {
-          name: 'Sticky Right Sidebar',
-          component: <Element is={CraftableStickyRightSidebar} canvas />,
-        },
-      ],
-    },
-    {
-      title: 'Checkout Components',
-      items: [
-        { name: 'Login Block', component: <CraftableLogin /> },
-        { name: 'Shipping Address', component: <CraftableShippingAddress /> },
-        { name: 'Billing Address', component: <CraftableBillingAddress /> },
-        {
-          name: 'Shipping Methods Form',
-          component: <CraftableShippingMethodsForm />,
-        },
-        { name: 'Payment Method Form', component: <CraftablePaymentMethod /> },
-        { name: 'Coupon Code Block', component: <CraftableCouponCode /> },
-        { name: 'Cart Items Form', component: <CraftableCartItemsForm /> },
-        {
-          name: 'Checkout Agreements',
-          component: <CraftableCheckoutAgreements />,
-        },
-        { name: 'Totals Summary', component: <CraftableTotals /> },
-        { name: 'Place Order Button', component: <CraftablePlaceOrder /> },
-        { name: 'System Message Block', component: <CraftableMessage /> },
-        { name: 'Page Loader Block', component: <CraftablePageLoader /> },
-      ],
-    },
-  ];
-
+  const definition = componentRegistry[type];
+  const Node = editorNodes[type];
+  const element = definition.container ? (
+    <Element is={Node} canvas />
+  ) : (
+    <Node />
+  );
   return (
-    <aside className="sidebar z-10 w-72 flex-shrink-0 border-r border-slate-800 bg-slate-950 px-4 py-5 text-slate-200">
-      <div className="mb-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">
-          Components
-        </h2>
-        <p className="text-xs text-slate-500 mt-1">
-          Drag elements into the canvas
-        </p>
-      </div>
-      <div className="space-y-6">
-        {blocks.map((cat) => (
-          <div key={cat.title} className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600">
-              {cat.title}
-            </h3>
-            <div className="grid gap-2">
-              {cat.items.map((item) => (
-                <div
-                  key={item.name}
-                  ref={(ref) => create(ref, item.component)}
-                  className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-slate-300 transition hover:border-slate-700 hover:bg-slate-900 hover:text-white cursor-grab active:cursor-grabbing select-none"
-                >
-                  <svg
-                    className="h-4 w-4 text-slate-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  </svg>
-                  <span>{item.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+    <button
+      type="button"
+      ref={(ref) => ref && create(ref, element)}
+      className="library-card"
+      title={`Drag ${definition.label} to the canvas`}
+      onDragStart={(event) => startDragPreview(type, event)}
+      onDragEnd={stopDragPreview}
+    >
+      {definition.label}
+    </button>
+  );
+}
+
+LibraryCard.propTypes = { type: PropTypes.string.isRequired };
+
+export function Sidebar() {
+  const [tab, setTab] = useState('library');
+  const { tree } = useEditor((state) => ({
+    tree: Object.values(state.nodes).map((node) => ({
+      id: node.id,
+      name: node.data.displayName,
+    })),
+  }));
+  return (
+    <aside className="editor-sidebar">
+      <nav className="editor-tabs" aria-label="Editor panels">
+        {['library', 'tree', 'settings'].map((name) => (
+          <button
+            key={name}
+            type="button"
+            className={tab === name ? 'is-active' : ''}
+            onClick={() => setTab(name)}
+          >
+            {name}
+          </button>
         ))}
+      </nav>
+      <div className="editor-sidebar__content">
+        {tab === 'library' &&
+          componentGroups.map((group) => (
+            <section key={group.label} className="library-group">
+              <h3>{group.label}</h3>
+              {group.types.map((type) => (
+                <LibraryCard key={type} type={type} />
+              ))}
+            </section>
+          ))}
+        {tab === 'tree' && (
+          <ul className="layout-tree">
+            {tree.map((node) => (
+              <li key={node.id}>{node.name}</li>
+            ))}
+          </ul>
+        )}
+        {tab === 'settings' && (
+          <p className="editor-empty">
+            Global settings will be introduced with a future schema version.
+          </p>
+        )}
       </div>
     </aside>
   );

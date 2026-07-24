@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="FriendsOfHyva_CheckoutExample::css/editor.css"/>
+    </head>
+    <body>
+        <referenceContainer name="content">
+            <block name="hyva.checkout.builder.editor"
+                   template="FriendsOfHyva_CheckoutExample::editor.phtml">
+                <arguments>
+                    <argument name="editor_config" xsi:type="object">FriendsOfHyva\CheckoutExample\ViewModel\EditorConfig</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+    </body>
+</page>
