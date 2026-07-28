@@ -1,8 +1,13 @@
+import {
+  CURRENT_LAYOUT_SCHEMA_VERSION,
+  COLUMN_CONTAINER_DEFAULTS,
+} from './componentDefinitions';
+
 export const defaultLayout = {
-  schemaVersion: 1,
+  schemaVersion: CURRENT_LAYOUT_SCHEMA_VERSION,
   root: {
-    type: 'Container',
-    props: {},
+    type: 'ColumnContainer',
+    props: COLUMN_CONTAINER_DEFAULTS,
     children: [
       { type: 'Message', props: {}, children: [] },
       { type: 'Login', props: {}, children: [] },

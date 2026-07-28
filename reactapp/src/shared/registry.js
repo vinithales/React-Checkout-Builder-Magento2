@@ -1,69 +1,39 @@
-import {
-  BillingAddress,
-  CartItems,
-  CheckoutAddressWrapper,
-  CheckoutAgreements,
-  CheckoutStickySidebar,
-  Container,
-  CouponCode,
-  Login,
-  Message,
-  PageLoader,
-  PaymentMethod,
-  PlaceOrder,
-  ShippingAddress,
-  ShippingMethods,
-  Totals,
-} from './components';
+import * as visualComponents from './components';
 import { componentDefinitions } from './componentDefinitions';
 
-export const componentRegistry = {
-  Container: { ...componentDefinitions.Container, component: Container },
-  AddressWrapper: {
-    ...componentDefinitions.AddressWrapper,
-    component: CheckoutAddressWrapper,
-  },
-  StickySidebar: {
-    ...componentDefinitions.StickySidebar,
-    component: CheckoutStickySidebar,
-  },
-  Login: { ...componentDefinitions.Login, component: Login },
-  ShippingAddress: {
-    ...componentDefinitions.ShippingAddress,
-    component: ShippingAddress,
-  },
-  BillingAddress: {
-    ...componentDefinitions.BillingAddress,
-    component: BillingAddress,
-  },
-  ShippingMethods: {
-    ...componentDefinitions.ShippingMethods,
-    component: ShippingMethods,
-  },
-  PaymentMethod: {
-    ...componentDefinitions.PaymentMethod,
-    component: PaymentMethod,
-  },
-  CouponCode: { ...componentDefinitions.CouponCode, component: CouponCode },
-  CartItems: { ...componentDefinitions.CartItems, component: CartItems },
-  CheckoutAgreements: {
-    ...componentDefinitions.CheckoutAgreements,
-    component: CheckoutAgreements,
-  },
-  Totals: { ...componentDefinitions.Totals, component: Totals },
-  PlaceOrder: { ...componentDefinitions.PlaceOrder, component: PlaceOrder },
-  Message: { ...componentDefinitions.Message, component: Message },
-  PageLoader: { ...componentDefinitions.PageLoader, component: PageLoader },
-};
+function createRegistryEntry(type) {
+  const definition = componentDefinitions[type];
+  return {
+    ...definition,
+    // T02 owns the visual implementations. Falling back to the legacy visual
+    // keeps the shared contract buildable until those exports are introduced.
+    component:
+      visualComponents[definition.componentName] || visualComponents.Container,
+  };
+}
 
-export const componentGroups = [
-  {
+export const componentRegistry = Object.freeze(
+  Object.fromEntries(
+    Object.keys(componentDefinitions).map((type) => [
+      type,
+      createRegistryEntry(type),
+    ])
+  )
+);
+
+export const componentGroups = Object.freeze([
+  Object.freeze({
     label: 'Layout',
-    types: ['Container', 'AddressWrapper', 'StickySidebar'],
-  },
-  {
+    types: Object.freeze([
+      'FlexContainer',
+      'ColumnContainer',
+      'AddressWrapper',
+      'StickySidebar',
+    ]),
+  }),
+  Object.freeze({
     label: 'Checkout',
-    types: [
+    types: Object.freeze([
       'Login',
       'ShippingAddress',
       'BillingAddress',
@@ -76,6 +46,6 @@ export const componentGroups = [
       'PlaceOrder',
       'Message',
       'PageLoader',
-    ],
-  },
-];
+    ]),
+  }),
+]);

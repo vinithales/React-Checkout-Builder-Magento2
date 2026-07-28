@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { getComponentDefaults } from '../shared/componentDefinitions';
 import { componentRegistry } from '../shared/registry';
 
 const EVENT = 'checkout-builder-drag-preview';
@@ -31,14 +32,22 @@ export function DragPreview() {
     };
   }, []);
   if (!type) return null;
-  const Component = componentRegistry[type].component;
+  const definition = componentRegistry[type];
+  if (!definition) return null;
+  const Component = definition.component;
+  const defaults = getComponentDefaults(type);
   return (
     <div
-      className="drag-preview"
+      className={`drag-preview ${
+        definition.container ? 'drag-preview--container' : ''
+      }`}
       style={{ left: position.x + 16, top: position.y + 16 }}
       aria-hidden="true"
     >
-      <Component />
+      <span className="drag-preview__label">{definition.label}</span>
+      <div className="drag-preview__component">
+        <Component {...defaults} />
+      </div>
     </div>
   );
 }

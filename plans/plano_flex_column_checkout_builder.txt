@@ -1,0 +1,566 @@
+PLANO EXECUTÁVEL POR AGENTES — FLEX CONTAINER E COLUMN CONTAINER
+
+1. OBJETIVO
+
+Adicionar Flex Container e Column Container ao Checkout Builder, preservando:
+
+- Runtime sem Craft.js;
+- bundles separados de Editor e Runtime;
+- DTO próprio, serializável e versionado;
+- registry compartilhado como fonte central;
+- layouts legados;
+- draft, publish, store view, fallback e lock otimista;
+- ausência de CSS arbitrário vindo do banco.
+
+O container legado não pode ser removido antes de existir migração e suporte de
+leitura compatível.
+
+2. REGRAS DE COORDENAÇÃO
+
+- O agente principal é o coordenador e único integrador.
+- Cada agente recebe somente uma tarefa T01–T07.
+- Nenhum agente pode editar arquivos fora de seu ownership.
+- Em cada tarefa, todos os arquivos não listados em "Ownership exclusivo" são
+  proibidos para escrita; a seção "Somente leitura" destaca os consumidores
+  esperados, mas não amplia o escopo.
+- Descobertas fora do escopo devem ser relatadas ao coordenador.
+- T01 define o contrato antes das implementações consumidoras.
+- T02, T03 e T04 podem executar em paralelo após T01.
+- T05 começa somente após T02 e T03.
+- T06 começa após T02, T03, T04 e T05.
+- T07 é exclusiva do coordenador/revisor e começa após todas as anteriores.
+- Não criar segunda árvore de renderização, registry paralelo ou defaults
+  duplicados.
+
+Estados possíveis: bloqueada, pronta, em andamento, em revisão, concluída.
+
+3. CONTRATO FUNCIONAL COMUM
+
+Tipos serializados
+
+- FlexContainer
+- ColumnContainer
+- Container permanece como tipo legado de leitura durante a transição.
+
+SpacingValue
+
+- top, right, bottom e left numéricos;
+- margin: 0 a 300 px;
+- padding: 0 a 300 px.
+
+FlexContainer props
+
+- direction: row | column;
+- wrap: nowrap | wrap;
+- justifyContent: flex-start | center | flex-end | space-between |
+  space-around | space-evenly;
+- alignItems: stretch | flex-start | center | flex-end;
+- gap: 0 a 200;
+- backgroundColor: hexadecimal normalizado ou transparent;
+- borderColor: hexadecimal normalizado ou transparent;
+- margin: SpacingValue;
+- padding: SpacingValue.
+
+Defaults de FlexContainer
+
+- direction: row;
+- wrap: nowrap;
+- justifyContent: flex-start;
+- alignItems: stretch;
+- gap: 16;
+- backgroundColor: transparent;
+- borderColor: transparent;
+- margin: 0 em todos os lados;
+- padding: 16 em todos os lados.
+
+ColumnContainer props
+
+- alignItems: stretch | flex-start | center | flex-end;
+- gap: 0 a 200;
+- backgroundColor: hexadecimal normalizado ou transparent;
+- borderColor: hexadecimal normalizado ou transparent;
+- margin: SpacingValue;
+- padding: SpacingValue.
+
+Defaults de ColumnContainer
+
+- direction interna fixa: column, não serializada nem editável;
+- alignItems: stretch;
+- gap: 16;
+- backgroundColor: transparent;
+- borderColor: transparent;
+- margin: 0 em todos os lados;
+- padding: 16 em todos os lados.
+
+Migração
+
+- preservar IDs, ordem e children;
+- Container legado com direction row vira FlexContainer;
+- os demais Containers legados viram ColumnContainer;
+- preservar estilos reconhecidos e preencher defaults ausentes;
+- salvar novamente no formato atual;
+- manter leitura segura do formato anterior;
+- impedir ciclos e aplicar limite defensivo de profundidade.
+
+Configurações globais
+
+- mode: one-page | steps;
+- columns: 1 | 2 | 3;
+- columnGap;
+- continuam no documento global;
+- não pertencem ao inspector dos containers;
+- não fazem parte do escopo de implementação deste plano, salvo preservar o
+  comportamento existente.
+
+4. MATRIZ DE TAREFAS
+
+T01 — Auditoria e contrato compartilhado
+
+Estado inicial: pronta.
+Dependências: nenhuma.
+Execução: obrigatoriamente primeiro.
+
+Objetivo
+
+Confirmar a arquitetura real e implementar a fonte compartilhada de tipos,
+defaults, schemas, normalização e migração consumida pelos demais agentes.
+
+Ownership exclusivo
+
+- reactapp/src/shared/componentDefinitions.js
+- reactapp/src/shared/layout.js
+- reactapp/src/shared/defaultLayout.js, se necessário
+- reactapp/src/shared/registry.js
+- novos arquivos dentro de reactapp/src/shared/
+
+Somente leitura
+
+- reactapp/src/editor/
+- reactapp/src/runtime/
+- Model/LayoutValidator.php
+- testes existentes
+
+Requisitos
+
+- auditar container atual, children, serialização, registry e versão do DTO;
+- centralizar defaults e schemas;
+- registrar FlexContainer e ColumnContainer;
+- manter alias/leitura de Container legado;
+- implementar função de migração idempotente;
+- não importar Craft.js na camada shared;
+- documentar exports públicos para os agentes consumidores.
+
+Entregáveis
+
+- contrato compartilhado implementado;
+- resumo de impacto no DTO e compatibilidade;
+- cenários de teste necessários informados ao agente T06.
+
+Validação
+
+- testes unitários focados da camada shared;
+- lint/build disponível que cubra os exports.
+
+Aceite
+
+- um único lugar define tipos, defaults e propriedades válidas;
+- migração preserva árvore e é idempotente;
+- registry reconhece tipos novo e legado;
+- nenhum código do Editor ou Runtime foi implementado.
+
+Prompt para criar o agente
+
+"Execute somente a T01 do plano
+plans/plano_flex_column_checkout_builder.txt. Leia os AGENTS.md aplicáveis.
+Você é o único owner dos arquivos listados em T01. Não edite Editor, Runtime
+ou PHP. Implemente e teste o contrato compartilhado; ao final retorne arquivos,
+testes, decisões, riscos e confirmação de escopo."
+
+T02 — Componentes compartilhados e Runtime
+
+Estado inicial: bloqueada.
+Dependências: T01.
+Pode executar em paralelo com: T03 e T04.
+
+Objetivo
+
+Implementar a representação visual compartilhada e a renderização recursiva no
+Runtime sem Craft.js e sem artefatos do Editor.
+
+Ownership exclusivo
+
+- reactapp/src/shared/components.jsx
+- novos componentes visuais fora de editor/, quando aprovados pelo coordenador
+- reactapp/src/runtime/CheckoutRuntime.jsx
+- reactapp/src/runtime/LayoutRenderer.jsx
+- novos arquivos dentro de reactapp/src/runtime/
+
+Somente leitura
+
+- contrato criado por T01
+- reactapp/src/editor/
+
+Requisitos
+
+- FlexContainer usa display flex e propriedades controladas;
+- ColumnContainer usa direction column fixa;
+- renderizar children recursivamente pelo registry existente;
+- ignorar/rejeitar props conforme o contrato;
+- não renderizar label, overlay, drop zone, fundo auxiliar ou handles;
+- não importar Craft.js.
+
+Validação
+
+- testes focados do Runtime, se existentes;
+- build do bundle Runtime.
+
+Aceite
+
+- ambos os tipos renderizam layout e children;
+- estilos são derivados somente de props normalizadas;
+- o bundle Runtime permanece sem Craft.js e sem UI de edição.
+
+Prompt para criar o agente
+
+"Execute somente a T02 do plano
+plans/plano_flex_column_checkout_builder.txt após confirmar T01 concluída.
+Consuma o contrato shared sem alterá-lo. Edite apenas o ownership de T02.
+Implemente os componentes e Runtime, valide o bundle e retorne o relatório
+obrigatório."
+
+T03 — Adapters, biblioteca, canvas e drag preview do Editor
+
+Estado inicial: bloqueada.
+Dependências: T01.
+Pode executar em paralelo com: T02 e T04.
+
+Objetivo
+
+Integrar os dois containers ao Craft.js e à biblioteca, com drop, seleção,
+reordenação, preview real e estados visuais exclusivos do Editor.
+
+Ownership exclusivo
+
+- reactapp/src/craft-components/CraftableContainer.jsx
+- novos adapters em reactapp/src/craft-components/
+- reactapp/src/editor/Canvas.jsx
+- reactapp/src/editor/CheckoutEditor.jsx
+- reactapp/src/editor/DragPreview.jsx
+- reactapp/src/editor/Sidebar.jsx
+- reactapp/src/editor/nodes.jsx
+- reactapp/src/editor/styles.css
+
+Somente leitura
+
+- contrato criado por T01
+- componentes compartilhados e Runtime de T02
+- reactapp/src/editor/Inspector.jsx
+- backend PHP
+
+Requisitos
+
+- biblioteca mostra Flex Container e Column Container na categoria Layout;
+- cartões minimalistas exibem nome, hover e cursor de arraste;
+- sidebar não renderiza preview completo;
+- drag preview usa representação real com fundo claro, borda tracejada, nome e
+  dimensões mínimas;
+- ambos são droppable, aceitam e reordenam children;
+- vazios mostram área de drop e "Solte componentes aqui";
+- implementar estados normal, hover, selecionado, drop permitido, drop
+  bloqueado e drag;
+- estilos auxiliares ficam somente no Editor;
+- preservar seleção, histórico, undo e redo existentes.
+
+Validação
+
+- testes React focados em biblioteca, drop e preview, se atribuídos;
+- build do bundle Editor.
+
+Aceite
+
+- containers podem ser arrastados, soltos e aninhados;
+- alterações estruturais participam do histórico;
+- nenhum artefato de edição foi adicionado ao Runtime ou shared.
+
+Prompt para criar o agente
+
+"Execute somente a T03 do plano
+plans/plano_flex_column_checkout_builder.txt após T01. Consuma o contrato
+shared sem editá-lo. Não altere Inspector, Runtime ou PHP. Implemente adapters,
+biblioteca, canvas e estilos do Editor nos arquivos de ownership e retorne o
+relatório obrigatório."
+
+T04 — Backend, validação e persistência compatível
+
+Estado inicial: bloqueada.
+Dependências: T01.
+Pode executar em paralelo com: T02 e T03.
+
+Objetivo
+
+Atualizar a validação Magento e a migração de entrada para aceitar os novos
+tipos com whitelist estrita sem alterar a arquitetura de persistência.
+
+Ownership exclusivo
+
+- Model/LayoutValidator.php
+- Model/DefaultLayout.php, se necessário
+- novos validadores/migradores PHP em Model/
+- testes PHP correspondentes
+
+Somente leitura
+
+- contrato criado por T01
+- Model/LayoutRepository.php
+- etc/db_schema.xml
+- frontend React
+
+Requisitos
+
+- validar tipos, props, enums, ranges, cores e spacing;
+- validar capacidade de receber children;
+- aceitar e migrar Container legado;
+- preservar versão, IDs, ordem e children;
+- impedir ciclos e limitar profundidade;
+- manter draft, publish, fallback, store view e lock otimista;
+- não criar tabela;
+- não permitir CSS arbitrário.
+
+Validação
+
+- testes PHP de layouts válidos e inválidos;
+- testes existentes de repository, fallback e lock otimista.
+
+Aceite
+
+- documentos novos válidos são aceitos;
+- valores e propriedades fora da whitelist são rejeitados;
+- documento legado continua legível/migrável;
+- persistência existente não foi reestruturada.
+
+Prompt para criar o agente
+
+"Execute somente a T04 do plano
+plans/plano_flex_column_checkout_builder.txt após T01. Edite apenas os arquivos
+PHP sob ownership. Não altere React, schema do banco ou repository salvo se o
+coordenador ampliar explicitamente o ownership. Implemente validação e
+compatibilidade, execute testes e retorne o relatório obrigatório."
+
+T05 — Inspector contextual
+
+Estado inicial: bloqueada.
+Dependências: T02 e T03.
+Execução: após integração local das duas dependências.
+
+Objetivo
+
+Expor apenas as propriedades válidas de cada container em grupos contextuais,
+com atualização imediata do canvas e integração ao histórico.
+
+Ownership exclusivo
+
+- reactapp/src/editor/Inspector.jsx
+- novos componentes internos do inspector em reactapp/src/editor/inspector/
+
+Somente leitura
+
+- contrato de T01
+- componentes de T02
+- adapters e CSS de T03
+
+Requisitos
+
+- FlexContainer: Layout, Style e Advanced;
+- Layout: direction, wrap, justifyContent, alignItems e gap;
+- ColumnContainer: não expor direction, wrap ou justifyContent;
+- Style: backgroundColor e borderColor;
+- Advanced: margin e padding por lado;
+- usar accordions ou grupos recolhíveis;
+- normalizar inputs antes de atualizar o nó;
+- não aceitar CSS livre;
+- mudanças aparecem imediatamente e participam de undo/redo.
+
+Validação
+
+- testes React focados em cada controle e histórico;
+- build do Editor.
+
+Aceite
+
+- propriedades incompatíveis não aparecem;
+- inputs respeitam enums e limites;
+- canvas reflete mudanças sem salvar/recarregar;
+- undo/redo restaura os valores.
+
+Prompt para criar o agente
+
+"Execute somente a T05 do plano
+plans/plano_flex_column_checkout_builder.txt após T02 e T03. Seu ownership é
+exclusivo do Inspector. Não edite adapters, shared, Runtime ou PHP. Implemente
+controles contextuais e testes atribuídos, valide o Editor e retorne o
+relatório obrigatório."
+
+T06 — Testes de contrato e integração automatizada
+
+Estado inicial: bloqueada.
+Dependências: T02, T03, T04 e T05.
+
+Objetivo
+
+Completar a cobertura automatizada transversal sem alterar a implementação para
+mascarar falhas.
+
+Ownership exclusivo
+
+- reactapp/src/shared/layout.test.js
+- novos arquivos de teste React
+- novos arquivos de teste PHP ainda não pertencentes a T04
+- fixtures exclusivas de teste
+
+Somente leitura
+
+- toda a implementação
+
+Requisitos React
+
+- biblioteca contém os dois containers;
+- preview real;
+- children e reordenação;
+- controles de direction, wrap, justify, align, gap, background, border,
+  margin e padding;
+- ColumnContainer não expõe controles indevidos;
+- undo/redo;
+- serialização, reload e migração legada;
+- Runtime não mostra estilos auxiliares.
+
+Requisitos PHP
+
+- DTO aceita ambos os tipos válidos;
+- rejeita tipos, props, enums, ranges e cores inválidos;
+- migração do legado;
+- limite de profundidade/ciclos;
+- draft, publish, fallback e lock otimista continuam passando.
+
+Validação
+
+- suíte React;
+- suíte PHP aplicável.
+
+Aceite
+
+- novos cenários relevantes possuem cobertura;
+- testes existentes continuam passando;
+- falhas de produto são reportadas ao owner e não corrigidas fora do ownership.
+
+Prompt para criar o agente
+
+"Execute somente a T06 do plano
+plans/plano_flex_column_checkout_builder.txt após T02–T05. Edite apenas testes
+e fixtures sob ownership. Não corrija implementação: reporte a falha ao
+coordenador e ao owner correspondente. Execute as suítes e retorne o relatório
+obrigatório."
+
+T07 — Revisão integrada e aceite final
+
+Estado inicial: bloqueada.
+Dependências: T01–T06.
+Responsável: coordenador ou agente revisor sem ownership anterior.
+
+Objetivo
+
+Revisar o conjunto, detectar divergências entre camadas e validar o fluxo real.
+
+Ownership
+
+- nenhum arquivo inicialmente;
+- correções retornam ao owner original;
+- o coordenador só edita diretamente quando não houver agente owner ativo e
+  registrar a mudança no relatório final.
+
+Checklist automatizado
+
+1. revisar diff e arquivos fora de escopo;
+2. executar testes React;
+3. executar testes PHP;
+4. build do Editor;
+5. build do Runtime;
+6. verificar ausência de Craft.js no Runtime;
+7. executar DI compile;
+8. validar persistência, fallback e lock otimista.
+
+Checklist manual
+
+1. abrir o Editor administrativo e selecionar store view;
+2. adicionar e configurar FlexContainer com dois children;
+3. adicionar e configurar ColumnContainer com children;
+4. validar drop, seleção, propriedades, undo e redo;
+5. salvar draft e recarregar;
+6. publicar e abrir checkout;
+7. comparar Editor e Runtime;
+8. confirmar ausência de overlays, labels e drop styles no Runtime;
+9. carregar layout legado e confirmar migração;
+10. validar fallback conforme comportamento existente.
+
+Aceite final
+
+- biblioteca e preview atendem ao contrato;
+- ambos aceitam children;
+- inspector é contextual;
+- persistência e reload preservam propriedades;
+- Runtime publicado é equivalente e não contém Craft.js/UI de edição;
+- layout legado funciona;
+- registry continua central;
+- DTO continua versionado;
+- bundles separados, testes, builds e DI compile passam;
+- validações manuais pendentes são explicitamente registradas.
+
+Prompt para criar o agente revisor
+
+"Execute somente a T07 do plano
+plans/plano_flex_column_checkout_builder.txt. Não implemente novas
+funcionalidades. Revise a integração T01–T06, execute todo o checklist possível
+no ambiente e encaminhe cada defeito ao owner original. Retorne evidências,
+pendências manuais e decisão objetiva de aprovado ou reprovado."
+
+5. ORDEM DE CRIAÇÃO DOS AGENTES
+
+Onda 1
+
+- criar T01;
+- aguardar conclusão e integrar o contrato.
+
+Onda 2
+
+- criar T02, T03 e T04;
+- executar em paralelo somente após validar que o ownership é disjunto.
+
+Onda 3
+
+- integrar T02 e T03;
+- criar T05.
+
+Onda 4
+
+- integrar T02–T05;
+- criar T06.
+
+Onda 5
+
+- integrar todas as tarefas;
+- criar T07 ou executar a revisão como coordenador.
+
+6. FORMATO DE RETORNO DE TODO AGENTE
+
+- Tarefa:
+- Status: concluída | bloqueada | reprovada
+- Resumo:
+- Arquivos alterados:
+- Validações e resultados:
+- Decisões/suposições:
+- Riscos ou pendências:
+- Confirmação de escopo: não editei arquivos fora do ownership.
+
+7. DEFINIÇÃO DE CONCLUÍDO DO PLANO
+
+O plano só está concluído depois de T07 aprovada. Conclusão isolada de T01–T06
+não autoriza declarar a funcionalidade pronta.

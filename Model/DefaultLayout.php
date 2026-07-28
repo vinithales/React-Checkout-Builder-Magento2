@@ -14,10 +14,10 @@ class DefaultLayout
     public function getJson(): string
     {
         return $this->json->serialize([
-            'schemaVersion' => 1,
+            'schemaVersion' => LayoutContract::CURRENT_SCHEMA_VERSION,
             'root' => [
-                'type' => 'Container',
-                'props' => [],
+                'type' => LayoutContract::COLUMN_CONTAINER,
+                'props' => LayoutContract::COLUMN_DEFAULTS,
                 'children' => [
                     ['type' => 'Message', 'props' => [], 'children' => []],
                     ['type' => 'Login', 'props' => [], 'children' => []],

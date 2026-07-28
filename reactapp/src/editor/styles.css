@@ -119,6 +119,10 @@
 .library-group {
   margin-bottom: 22px;
 }
+.library-group__cards {
+  display: grid;
+  gap: 7px;
+}
 .library-group h3,
 .inspector-section h3 {
   margin: 0 0 9px;
@@ -131,7 +135,6 @@
 .library-card {
   width: 100%;
   display: block;
-  margin-bottom: 7px;
   padding: 11px 12px;
   border: 1px solid #e2e7ef;
   border-radius: 8px;
@@ -139,11 +142,21 @@
   color: #303a4e;
   cursor: grab;
   font-size: 12px;
+  font-weight: 550;
   text-align: left;
+  transition: border-color .15s ease, color .15s ease, background .15s ease;
 }
 .library-card:hover {
   border-color: #9db8f3;
+  background: #f8faff;
   color: #174da9;
+}
+.library-card:active {
+  cursor: grabbing;
+}
+.library-card:focus-visible {
+  outline: 2px solid #2463eb;
+  outline-offset: 2px;
 }
 .layout-tree {
   margin: 0;
@@ -178,19 +191,51 @@
   position: relative;
   min-height: 22px;
   border: 1px solid transparent;
+  transition: border-color .12s ease, box-shadow .12s ease, opacity .12s ease;
 }
-.editor-node:hover {
+.editor-node--hovered {
   border-color: #a8c0f2;
 }
 .editor-node--selected {
   border-color: #2463eb;
   box-shadow: 0 0 0 1px #2463eb;
 }
-.editor-node[data-component="Container"],
-.editor-node[data-component="AddressWrapper"],
-.editor-node[data-component="StickySidebar"] {
+.editor-node--dragging {
+  opacity: .45;
+}
+.editor-container-node {
   min-height: 72px;
   padding: 7px;
+}
+.editor-node--drop-allowed {
+  border-color: #178654;
+  box-shadow: inset 0 0 0 1px #178654;
+}
+.editor-node--drop-blocked {
+  border-color: #c73442;
+  box-shadow: inset 0 0 0 1px #c73442;
+}
+.editor-container-empty {
+  min-height: 68px;
+  display: grid;
+  margin-top: 6px;
+  place-items: center;
+  border: 1px dashed #b9c3d3;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #7a8599;
+  font-size: 11px;
+  pointer-events: none;
+}
+.editor-node--drop-allowed > .editor-container-empty {
+  border-color: #178654;
+  background: #f0faf5;
+  color: #116a42;
+}
+.editor-node--drop-blocked > .editor-container-empty {
+  border-color: #c73442;
+  background: #fff5f6;
+  color: #a72b37;
 }
 .editor-inspector {
   width: 270px;
@@ -238,11 +283,30 @@
   max-height: 260px;
   overflow: hidden;
   padding: 12px;
-  border: 1px solid #b9c9e9;
+  border: 1px dashed #8da8db;
   border-radius: 8px;
-  background: #fff;
+  background: #fdfefe;
   box-shadow: 0 16px 36px rgb(20 34 60 / 22%);
   pointer-events: none;
   transform: scale(.88);
   transform-origin: top left;
+}
+.drag-preview--container {
+  min-height: 120px;
+}
+.drag-preview__label {
+  display: block;
+  margin-bottom: 8px;
+  color: #48638f;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.drag-preview__component {
+  min-height: 38px;
+  overflow: hidden;
+}
+.drag-preview--container .drag-preview__component {
+  min-height: 72px;
 }

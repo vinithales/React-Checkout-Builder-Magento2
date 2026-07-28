@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Element, useEditor } from '@craftjs/core';
 import PropTypes from 'prop-types';
+import { getComponentDefaults } from '../shared/componentDefinitions';
 import { componentGroups, componentRegistry } from '../shared/registry';
 import { editorNodes } from './nodes';
 import { startDragPreview, stopDragPreview } from './DragPreview';
@@ -11,10 +12,11 @@ function LibraryCard({ type }) {
   } = useEditor();
   const definition = componentRegistry[type];
   const Node = editorNodes[type];
+  const defaults = getComponentDefaults(type);
   const element = definition.container ? (
-    <Element is={Node} canvas />
+    <Element is={Node} canvas {...defaults} />
   ) : (
-    <Node />
+    <Node {...defaults} />
   );
   return (
     <button
@@ -22,6 +24,7 @@ function LibraryCard({ type }) {
       ref={(ref) => ref && create(ref, element)}
       className="library-card"
       title={`Drag ${definition.label} to the canvas`}
+      aria-label={`Arraste ${definition.label} para o canvas`}
       onDragStart={(event) => startDragPreview(type, event)}
       onDragEnd={stopDragPreview}
     >
@@ -59,9 +62,11 @@ export function Sidebar() {
           componentGroups.map((group) => (
             <section key={group.label} className="library-group">
               <h3>{group.label}</h3>
-              {group.types.map((type) => (
-                <LibraryCard key={type} type={type} />
-              ))}
+              <div className="library-group__cards">
+                {group.types.map((type) => (
+                  <LibraryCard key={type} type={type} />
+                ))}
+              </div>
             </section>
           ))}
         {tab === 'tree' && (
